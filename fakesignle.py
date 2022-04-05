@@ -24,6 +24,10 @@ wordlist.update(additional_words)
 acceptable_words.update(wordlist)
 
 # palette: 🟩🟨⬛🆒
+greenbox = 'G'
+yellowbox = 'Y'
+blackbox = 'b'
+bluebox = 'W'
 
 class Message:
     timestamp: int
@@ -43,7 +47,9 @@ class Game:
     wins = 0
     guesshistory = []
     resulthistory = []
-    correctletters = {}
+    # TODO: make letters into sets
+    correctletters = []
+    incorrectletters = []
     correctpositions = []
 
     def reset(self):
@@ -52,7 +58,17 @@ class Game:
         self.guesshistory.clear()
         self.resulthistory.clear()
         self.correctletters.clear()
+        self.incorrectletters.clear()
         self.correctpositions.clear()
+        
+        blankchar = '_'
+        self.correctpositions.append(blankchar)
+        self.correctpositions.append(blankchar)
+        self.correctpositions.append(blankchar)
+        self.correctpositions.append(blankchar)
+        self.correctpositions.append(blankchar)
+        self.correctpositions.append(blankchar)
+        
         return
 
     def guess(self, guess: str):
@@ -71,33 +87,46 @@ class Game:
 
         for i in range(6):
             if guess[i] == self.word[i]:
-                output += '🟩'
+                output += greenbox
+                self.correctpositions[i] = guess[i]
             else:
                 found = False
                 for j in range(6):
                     if guess[i] == self.word[j]:
-                        output += '🟨'
+                        output += yellowbox
                         found = True
                         break
                 if found == False: 
-                    output += '⬛'
-        
-        count = 0
-        for i in range(6):
-            if guess[i] != '🟩':
-                break
-        if count == 6: output = '🆒🆒🆒🆒🆒🆒'
+                    output += blackbox
+                    for l in self.incorrectletters:
+                        if l == guess[i]: break
+                    self.incorrectletters.append(guess[i])
+                else: # this is very stupid
+                    for l in self.correctletters:
+                        if l == guess[i]: break
+                    self.correctletters.append(guess[i])
 
         self.guesshistory.append(guess)
-        output += '\n'
         self.resulthistory.append(output)
-        output = ''.join(self.resulthistory)
+
+        # todo history times?
+        for h in 4:
+            output += self.resulthistory[h] + ' '
+            output += self.resulthistory[h] + '/n'
+
         # tries remaining
-        output.join(self.correctletters)
+        for p in self.correctpositions:
+            output += p
+        output += '\ncorrect letters: '
+        for l in self.correctletters:
+            output += l + ' '
+        output += '\nincorrect letters: '
+        for l in self.incorrectletters:
+            output += l + ' '
 
         return output
 
-    async def render(self) -> str:
+    def render(self) -> str:
         output = ''
         # for self.tries:
         
@@ -156,7 +185,6 @@ class main():
         print(games[phone_number].guess(user_input))
     
     print("exited")
-
 
 if __name__ == "__main__":
     sys.exit(main())
